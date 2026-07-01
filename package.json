@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@tavily/core": "^0.7.6",
+    "openai": "^6.45.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.1"
+  }
+}
