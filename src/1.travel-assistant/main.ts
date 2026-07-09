@@ -125,7 +125,6 @@ class OpenAICompatibleClient {
         messages: messages,
         stream: false,
       })
-
       return response.choices[0].message.content!
     } catch (e) {
       return `错误:调用语言模型服务时出错。${e}`
