@@ -1,8 +1,11 @@
 import OpenAI from "openai";
 import type {
+  ChatCompletion,
   ChatCompletionCreateParamsNonStreaming,
   ChatCompletionCreateParamsStreaming,
   ChatCompletionMessageParam,
+  ChatCompletionTool,
+  ChatCompletionToolChoiceOption,
 } from "openai/resources/chat/completions";
 
 import { HelloAgentsException } from "./exceptions";
@@ -199,6 +202,41 @@ export class HelloAgentsLLM {
       const response = await this.client.chat.completions.create(request);
 
       return response.choices[0]?.message.content ?? "";
+    } catch (error) {
+      throw new HelloAgentsException(`LLM调用失败: ${this.getErrorMessage(error)}`);
+    }
+  }
+
+  /**
+   * 发起一次原生 Function Calling 请求，并保留完整响应中的 tool_calls。
+   *
+   * 普通 invoke 只投影首条回复文本；需要执行工具的 Agent 应使用此入口，避免
+   * 绕过 HelloAgentsLLM 的配置合并和统一异常处理直接访问底层 SDK。
+   */
+  async invokeWithTools(
+    messages: ChatCompletionMessageParam[],
+    tools: ChatCompletionTool[],
+    toolChoice: ChatCompletionToolChoiceOption = "auto",
+    options: InvokeOptions = {},
+  ): Promise<ChatCompletion> {
+    const {
+      temperature = this.temperature,
+      maxTokens = this.maxTokens,
+      ...additionalOptions
+    } = options;
+
+    try {
+      const request = {
+        ...additionalOptions,
+        model: this.model,
+        messages,
+        tools,
+        tool_choice: toolChoice,
+        temperature,
+        max_tokens: maxTokens,
+        stream: false,
+      } as ChatCompletionCreateParamsNonStreaming;
+      return await this.client.chat.completions.create(request);
     } catch (error) {
       throw new HelloAgentsException(`LLM调用失败: ${this.getErrorMessage(error)}`);
     }
