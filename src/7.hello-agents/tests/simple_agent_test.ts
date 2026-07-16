@@ -1,11 +1,11 @@
 import { HelloAgentsLLM } from "../core/llm";
 import { CalculatorTool } from "../tools/builtin/calculator";
 import { ToolRegistry } from "../tools/registry";
-import { SimpleAgent } from "./simple_agent";
+import { SimpleAgent } from "../agents/simple_agent";
 
 async function main(): Promise<void> {
   // Bun 会在启动时自动加载项目根目录下的 .env 文件。
-  const llm = new HelloAgentsLLM();
+  const llm = new HelloAgentsLLM({ httpDebug: true });
 
   // 测试1：基础对话 Agent（无工具）
   console.log("=== 测试1：基础对话 ===");

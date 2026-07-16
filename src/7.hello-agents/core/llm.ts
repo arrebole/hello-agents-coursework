@@ -44,6 +44,8 @@ export interface HelloAgentsLLMOptions {
   maxTokens?: number;
   /** SDK 请求超时，单位为秒。 */
   timeout?: number;
+  /** 打印每次 LLM 调用的底层 HTTP 请求/响应 body，仅用于教学与调试。 */
+  httpDebug?: boolean;
   /** 保留未声明的扩展配置，供上层代码读取。 */
   [key: string]: unknown;
 }
@@ -91,6 +93,7 @@ export class HelloAgentsLLM {
       temperature = 0.7,
       maxTokens,
       timeout,
+      httpDebug = false,
       ...kwargs
     } = options;
 
@@ -130,6 +133,8 @@ export class HelloAgentsLLM {
       apiKey: this.apiKey,
       baseURL: this.baseURL,
       timeout: this.timeout * 1_000,
+      // 仅在开启调试时注入自定义 fetch，用于打印底层 HTTP 请求/响应 body。
+      ...(httpDebug ? { fetch: this.createDebugFetch() } : {}),
     });
   }
 
@@ -454,5 +459,49 @@ export class HelloAgentsLLM {
   /** 将 unknown 异常安全地归一化为可用于日志和领域异常的文本。 */
   private getErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
+  }
+
+  /**
+   * 生成一个包裹全局 fetch 的调试版实现，供 OpenAI SDK 在每次 HTTP 请求时调用。
+   *
+   * 只打印请求 body 与响应 body（不含 URL、method、headers、status），因此不会
+   * 泄露 Authorization 中的密钥。响应通过 `clone()` 读取，交回 SDK 的仍是未被消费
+   * 的原始 Response；所有打印逻辑都包裹在 try/catch 中，任何打印异常都不会影响
+   * 真实请求的返回结果。
+   */
+  private createDebugFetch(): typeof fetch {
+    const formatBody = (raw: string): string => {
+      try {
+        return JSON.stringify(JSON.parse(raw), null, 2);
+      } catch {
+        // 非 JSON（例如流式 SSE 分片）时原样打印文本。
+        return raw;
+      }
+    };
+
+    return async (input, init) => {
+      // 请求 body 由 SDK 预先序列化为字符串；无 body 时（理论上不会）跳过打印。
+      try {
+        if (typeof init?.body === "string") {
+          console.log("\n===== LLM HTTP 请求 body =====");
+          console.log(formatBody(init.body));
+        }
+      } catch (error) {
+        console.error(`打印LLM请求body时发生错误: ${this.getErrorMessage(error)}`);
+      }
+
+      const response = await fetch(input, init);
+
+      // 只消费克隆体来打印，返回未被读取的原始 response 给 SDK。
+      try {
+        const bodyText = await response.clone().text();
+        console.log("===== LLM HTTP 响应 body =====");
+        console.log(formatBody(bodyText));
+      } catch (error) {
+        console.error(`打印LLM响应body时发生错误: ${this.getErrorMessage(error)}`);
+      }
+
+      return response;
+    };
   }
 }

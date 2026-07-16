@@ -1,11 +1,11 @@
 import { HelloAgentsLLM } from "../core/llm";
 import { WebSearchTool } from "../tools/builtin/web_search";
 import { ToolRegistry } from "../tools/registry";
-import { ReActAgent } from "./react_agent";
+import { ReActAgent } from "../agents/react_agent";
 
 async function main(): Promise<void> {
   // Bun 会在启动时自动加载项目根目录下的 .env 文件。
-  const llm = new HelloAgentsLLM();
+  const llm = new HelloAgentsLLM({ httpDebug: true });
 
   // 测试：带工具的 Agent
   console.log("=== 测试：ReAct Agent ===");

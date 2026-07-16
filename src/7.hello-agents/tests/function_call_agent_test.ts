@@ -1,10 +1,10 @@
 import { HelloAgentsLLM } from "../core/llm";
 import { CalculatorTool } from "../tools/builtin/calculator";
-import { FunctionCallAgent } from "./function_call_agent";
+import { FunctionCallAgent } from "../agents/function_call_agent";
 
 async function main(): Promise<void> {
   // Bun 会在启动时自动加载项目根目录下的 .env 文件。
-  const llm = new HelloAgentsLLM();
+  const llm = new HelloAgentsLLM({ httpDebug: true });
   const agent = new FunctionCallAgent(
     "函数调用助手",
     llm,
