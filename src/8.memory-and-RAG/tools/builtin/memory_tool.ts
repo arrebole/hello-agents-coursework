@@ -8,7 +8,8 @@
 //   2) 便捷方法（addKnowledge / getContextForQuery / autoRecordConversation / ...）—— 面向代码直接调用（Agent 内部）。
 
 import { Tool, ToolParameter } from "../../../7.hello-agents/tools/base";
-import { ForgetType, MemoryConfig, MemoryManager, MemoryRecord, MemoryStats, MemoryType, MemoryTypeLabels } from "../../memory/manager";
+import { ForgetType, MemoryConfig, MemoryManager, MemoryStats, MemoryType, MemoryTypeLabels } from "../../memory/manager";
+import { MemoryItem } from "../../memory/types/memory";
 
 // 支持的操作集合。
 // 用 `as const` 数组作为「单一事实来源」：类型 MemoryToolAction 与运行时守卫 isMemoryToolAction 都从它派生，
@@ -441,7 +442,7 @@ export class MemoryTool extends Tool {
             // 双重去重：既防同一条记忆重复出现（ID），也防不同 ID 但内容相同的记忆（内容）
             const seenIds = new Set<string>();
             const seenContents = new Set<string>();
-            const uniqueMemories: MemoryRecord[] = [];
+            const uniqueMemories: MemoryItem[] = [];
 
             for (const memory of importantMemories) {
                 // 1) ID 去重：同一条记忆只保留一次
