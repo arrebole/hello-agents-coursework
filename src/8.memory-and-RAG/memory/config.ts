@@ -1,15 +1,18 @@
 export class MemoryConfig {
-    maxCapacity: number;
-    importanceThreshold: number;
-    decayFactor: number;
+    // public readonly maxCapacity: number;
+    // public readonly importanceThreshold: number;
+    // public readonly decayFactor: number;
+
+    // public readonly workingMemoryCapacity: number
+    // public readonly  workingMemoryTTL: Number
 
     constructor(
-        maxCapacity: number = 1000,
-        importanceThreshold: number = 0.7,
-        decayFactor: number = 0.05,
+        public readonly maxCapacity: number = 1000,
+        public readonly importanceThreshold: number = 0.7,
+        public readonly decayFactor: number = 0.05,
+        public readonly workingMemoryCapacity: number = 50,
+        public readonly workingMemoryTTL: number = 60,
+        public readonly workingMemoryTokens: number = 1000,
     ) {
-        this.maxCapacity = maxCapacity;
-        this.importanceThreshold = importanceThreshold;
-        this.decayFactor = decayFactor;
     }
 }

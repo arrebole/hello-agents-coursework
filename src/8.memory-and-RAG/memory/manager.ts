@@ -3,7 +3,7 @@
 import { MemoryConfig } from "./config";
 import { MemoryStore } from "./storage/store";
 import { EpisodicMemory } from "./types/episodic";
-import { Memory } from "./types/memory";
+import { Memory, MemoryItem } from "./types/memory";
 import { PerceptualMemory } from "./types/perceptual";
 import { SemanticMemory } from "./types/semantic";
 import { WorkingMemory } from "./types/working";
@@ -42,21 +42,6 @@ export const MemoryTypeLabels: Record<string, string> = {
     perceptual: "感知记忆",
 };
 
-/**
- * 单条记忆记录。
- *
- * 这是管理器内部最核心的数据结构：每次 `addMemory` 最终都会落成一条记录。
- * 记录中保留内容、归属类型、重要性、元数据，以及用于统计和清理的辅助字段。
- */
-export interface MemoryRecord {
-    id: string;
-    content: string;
-    memoryType: MemoryType;
-    importance: number;
-    metadata?: Record<string, unknown>;
-    userId?: string;
-    timestamp?: number;
-}
 
 /**
  * 单类型记忆统计。
@@ -88,7 +73,7 @@ export interface MemoryStats {
  */
 type MemoryBucket = {
     instance: Memory;
-    records: Map<string, MemoryRecord>;
+    records: Map<string, MemoryItem>;
 };
 
 /**
@@ -209,7 +194,7 @@ export class MemoryManager {
 
         // 统一在管理器层补齐公共字段：ID、所属用户、时间戳、重要性。
         // 这样上层只关心“写什么”，不用重复构造完整记录。
-        const record: MemoryRecord = {
+        const record: MemoryItem = {
             id: this.generateId(),
             content,
             memoryType,
@@ -255,12 +240,12 @@ export class MemoryManager {
         limit: number = 10,
         memoryTypes: string[] | null = null,
         minImportance: number = 0,
-    ): MemoryRecord[] {
+    ): MemoryItem[] {
         // memoryTypes 为空时，默认在所有启用的类型里搜索。
         const typesToSearch = this.normalizeMemoryTypes(memoryTypes);
         // 查询串统一转成小写，后续比较时只做简单包含判断，降低噪声。
         const normalizedQuery = query.trim().toLowerCase();
-        const results: Array<{ record: MemoryRecord; score: number }> = [];
+        const results: Array<{ record: MemoryItem; score: number }> = [];
 
         for (const memoryType of typesToSearch) {
             const bucket = this.getBucket(memoryType);
@@ -445,7 +430,7 @@ export class MemoryManager {
 
         const { bucket, record } = found;
         // 只改调用方明确传入的字段，其他字段保持原值。
-        const updated: MemoryRecord = {
+        const updated: MemoryItem = {
             ...record,
             content: content ?? record.content,
             importance: importance === null ? record.importance : this.clampImportance(importance),
@@ -513,7 +498,7 @@ export class MemoryManager {
         // 记录表才是真正的数据源，instance 主要用于未来扩展。
         return {
             instance,
-            records: new Map<string, MemoryRecord>(),
+            records: new Map<string, MemoryItem>(),
         };
     }
 
@@ -564,7 +549,7 @@ export class MemoryManager {
      * @param memoryId 目标记忆 ID
      * @returns 找到时返回桶和记录，否则返回 null
      */
-    private findMemory(memoryId: string): { bucket: MemoryBucket; record: MemoryRecord } | null {
+    private findMemory(memoryId: string): { bucket: MemoryBucket; record: MemoryItem } | null {
         // 因为 ID 全局唯一，所以顺序扫一遍所有桶即可定位到目标记录。
         for (const bucket of this.memoryTypes.values()) {
             const record = bucket.records.get(memoryId);
@@ -588,7 +573,7 @@ export class MemoryManager {
      * @param query 标准化后的查询文本
      * @returns 该记录的检索分数
      */
-    private scoreRecord(record: MemoryRecord, query: string): number {
+    private scoreRecord(record: MemoryItem, query: string): number {
         if (!query) {
             // 空查询时，直接退化成按重要性排序，常用于 summary 之类的场景。
             return record.importance;
@@ -637,7 +622,7 @@ export class MemoryManager {
      * @param record 待判断的记录
      * @returns 是否需要整合
      */
-    private shouldConsolidate(record: MemoryRecord): boolean {
+    private shouldConsolidate(record: MemoryItem): boolean {
         // 高重要性工作记忆会被进一步提到情景记忆，模拟“短期固化”。
         return record.importance >= this.getConsolidationThreshold();
     }
@@ -782,7 +767,7 @@ export class MemoryManager {
      * @param record 原始记录
      * @returns 复制后的记录
      */
-    private cloneRecord(record: MemoryRecord): MemoryRecord {
+    private cloneRecord(record: MemoryItem): MemoryItem {
         // 返回拷贝而不是原对象，避免上层误改内部索引里的数据。
         // 这里尤其要保护 metadata，因为它是引用类型，直接透传容易被意外修改。
         return {
