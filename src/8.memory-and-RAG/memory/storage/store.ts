@@ -1,6 +1,8 @@
-import { MemoryConfig } from "../config";
+import { MemoryConfig } from "../config.ts";
 
 
 export class MemoryStore {
-    constructor(config: MemoryConfig) { }
+    constructor(config: MemoryConfig) {
+        void config;
+    }
 }

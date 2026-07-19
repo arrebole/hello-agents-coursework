@@ -1,6 +1,6 @@
-import { MemoryConfig } from "../config";
-import { MemoryType } from "../manager";
-import { MemoryStore } from "../storage/store";
+import type { MemoryConfig } from "../config.ts";
+import type { MemoryType } from "../manager.ts";
+import type { MemoryStore } from "../storage/store.ts";
 
 /**
  * 单条记忆记录。
@@ -22,7 +22,10 @@ export interface MemoryItem {
 // 记忆类接口
 export abstract class Memory {
 
-    constructor(config: MemoryConfig, store: MemoryStore) { }
+    constructor(config: MemoryConfig, store: MemoryStore) {
+        void config;
+        void store;
+    }
 
     // 增加记忆
     public abstract add(memoryItem: MemoryItem): string;

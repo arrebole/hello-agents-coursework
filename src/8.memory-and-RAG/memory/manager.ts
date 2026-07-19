@@ -1,14 +1,15 @@
 // 记忆管理器（统一协调调度）
 
-import { MemoryConfig } from "./config";
-import { MemoryStore } from "./storage/store";
-import { EpisodicMemory } from "./types/episodic";
-import { Memory, MemoryItem } from "./types/memory";
-import { PerceptualMemory } from "./types/perceptual";
-import { SemanticMemory } from "./types/semantic";
-import { WorkingMemory } from "./types/working";
+import type { MemoryConfig } from "./config.ts";
+import type { MemoryStore } from "./storage/store.ts";
+import { EpisodicMemory } from "./types/episodic.ts";
+import { Memory } from "./types/memory.ts";
+import type { MemoryItem } from "./types/memory.ts";
+import { PerceptualMemory } from "./types/perceptual.ts";
+import { SemanticMemory } from "./types/semantic.ts";
+import { WorkingMemory } from "./types/working.ts";
 
-export { MemoryConfig } from "./config";
+export { MemoryConfig } from "./config.ts";
 
 /**
  * 记忆类型枚举的字符串联合值。
@@ -96,13 +97,18 @@ const DEFAULT_CAPACITY_LIMIT = 20;
  * 方便以后替换成向量检索、全文检索或外部存储检索实现。
  */
 export class MemoryRetriever {
+    private store: MemoryStore;
+    private config: MemoryConfig;
+
     /**
      * 创建一个检索器。
      *
      * @param store 底层记忆存储抽象
      * @param config 记忆系统配置
      */
-    constructor(private store: MemoryStore, private config: MemoryConfig) {
+    constructor(store: MemoryStore, config: MemoryConfig) {
+        this.store = store;
+        this.config = config;
         // 当前版本的检索逻辑主要在 MemoryManager 内部完成；
         // 这里保留对象是为了后续如果接入向量检索或外部存储时可以平滑扩展。
         void this.store;

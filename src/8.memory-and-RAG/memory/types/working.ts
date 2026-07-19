@@ -1,8 +1,9 @@
 // 工作记忆（TTL管理，纯内存）
 
-import { MemoryConfig } from "../config";
-import { MemoryStore } from "../storage/store";
-import { Memory, MemoryItem } from "./memory";
+import type { MemoryConfig } from "../config.ts";
+import type { MemoryStore } from "../storage/store.ts";
+import { Memory } from "./memory.ts";
+import type { MemoryItem } from "./memory.ts";
 import { Heap } from "heap-js";
 
 /** 堆中的单条记录。 */
